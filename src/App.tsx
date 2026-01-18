@@ -1,33 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Check, Trash2, Moon, Sun, Calendar as CalIcon, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Check, Trash2, Moon, Sun, Calendar as CalIcon, Globe, ChevronLeft, ChevronRight, ClipboardList } from 'lucide-react';
 
 export default function HomiesMyDay() {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [activeTab, setActiveTab] = useState("calendar");
+  const [activeTab, setActiveTab] = useState("calendar"); // 'calendar', 'global', or 'all'
   const today = new Date();
   const [currentDate, setCurrentDate] = useState(today);
   const [selectedDate, setSelectedDate] = useState(today);
 
-  // --- MEMORY FIX STARTS HERE ---
-  // 1. Initialize State: Try to load from "pocket" (localStorage) first.
+  // --- MEMORY SYSTEM ---
   const [tasks, setTasks] = useState(() => {
     const saved = localStorage.getItem("homies-tasks");
     if (saved) {
       return JSON.parse(saved);
     } else {
-      // Default tasks if nothing is saved yet
       return [
-        { id: 1, text: "Finish the app upgrade", priority: "High", completed: false, date: today.toDateString(), type: 'daily' },
-        { id: 2, text: "Become a React Pro", priority: "High", completed: false, date: "", type: 'global' },
+        { id: Date.now(), text: "Finish the app upgrade", priority: "High", completed: false, date: today.toDateString(), type: 'daily' },
+        { id: Date.now() - 10000, text: "Become a React Pro", priority: "High", completed: false, date: "2026", type: 'global' },
       ];
     }
   });
 
-  // 2. Auto-Save: Whenever 'tasks' changes, save it to the pocket.
   useEffect(() => {
     localStorage.setItem("homies-tasks", JSON.stringify(tasks));
   }, [tasks]);
-  // --- MEMORY FIX ENDS HERE ---
 
   const [newTask, setNewTask] = useState("");
   const [priority, setPriority] = useState("Low");
@@ -39,6 +35,7 @@ export default function HomiesMyDay() {
   const handleDayClick = (day) => {
     const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
     setSelectedDate(newDate);
+    setActiveTab('calendar'); // Switch back to calendar when picking a date
   };
 
   const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
@@ -47,18 +44,36 @@ export default function HomiesMyDay() {
   const addTask = () => {
     if (!newTask.trim()) return;
     const taskType = activeTab === 'global' ? 'global' : 'daily';
-    const taskDate = activeTab === 'global' ? '2026' : selectedDate.toDateString();
-    setTasks([...tasks, { id: Date.now(), text: newTask, priority, completed: false, date: taskDate, type: taskType }]);
+    // If we are in 'all' tab, default to daily task for today
+    const taskDate = (activeTab === 'global') ? '2026' : selectedDate.toDateString();
+    
+    setTasks([...tasks, { 
+        id: Date.now(), // This ID is also the "Created At" timestamp!
+        text: newTask, 
+        priority, 
+        completed: false, 
+        date: taskDate, 
+        type: taskType 
+    }]);
     setNewTask("");
   };
 
   const toggleComplete = (id) => setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
   const deleteTask = (id) => setTasks(tasks.filter(t => t.id !== id));
 
-  const filteredTasks = tasks.filter(task => {
-    if (activeTab === 'global') return task.type === 'global';
-    return task.type === 'daily' && task.date === selectedDate.toDateString();
-  });
+  // --- FILTER LOGIC ---
+  const getFilteredTasks = () => {
+      if (activeTab === 'all') {
+          // Return ALL tasks, sorted by newest first (using ID)
+          return [...tasks].sort((a, b) => b.id - a.id);
+      }
+      return tasks.filter(task => {
+        if (activeTab === 'global') return task.type === 'global';
+        return task.type === 'daily' && task.date === selectedDate.toDateString();
+      });
+  };
+
+  const filteredTasks = getFilteredTasks();
 
   const getPriorityColor = (p) => {
     switch(p) {
@@ -68,13 +83,17 @@ export default function HomiesMyDay() {
     }
   };
 
+  // Format the "Created Date" from the ID
+  const getCreatedDate = (id) => {
+      return new Date(id).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  };
+
   const bgMain = isDarkMode ? 'bg-[#191919]' : 'bg-[#F7F7F5]';
   const bgCard = isDarkMode ? 'bg-[#202020] border-[#2A2A2A]' : 'bg-white border-gray-200';
   const textColor = isDarkMode ? 'text-[#D4D4D4]' : 'text-[#37352F]';
   const inputBg = isDarkMode ? 'bg-[#2A2A2A] text-white border-gray-700 focus:border-gray-500' : 'bg-gray-50 text-black border-gray-200 focus:border-black';
 
   return (
-    // SUPER GLUE LAYOUT (Preserved from previous fix)
     <div className={`fixed inset-0 w-full h-[100dvh] ${bgMain} ${textColor} font-sans flex justify-center md:items-center md:py-8 transition-colors duration-300 overflow-hidden`}>
       <div className={`w-full h-full md:max-w-md md:h-auto md:min-h-[700px] ${bgCard} md:shadow-xl md:border md:rounded-2xl flex flex-col transition-colors duration-300 relative`}>
         
@@ -83,7 +102,7 @@ export default function HomiesMyDay() {
             <button onClick={() => setIsDarkMode(!isDarkMode)} className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 p-2 rounded-full text-white backdrop-blur-md transition z-10">
               {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-            <div className="absolute bottom-2 right-4 text-xs text-white/60 font-mono">v3.1 Memory</div>
+            <div className="absolute bottom-2 right-4 text-xs text-white/60 font-mono">v4.0 Master Log</div>
         </div>
 
         {/* PROFILE */}
@@ -96,15 +115,16 @@ export default function HomiesMyDay() {
           <div className="mt-16 flex justify-between items-end">
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Homies Dashboard</h1>
-              <p className="text-gray-500 text-xs">Planning: <span className="font-semibold">{activeTab === 'global' ? 'Global Vision' : selectedDate.toDateString()}</span></p>
+              <p className="text-gray-500 text-xs">View: <span className="font-semibold uppercase">{activeTab === 'all' ? 'Master History' : activeTab}</span></p>
             </div>
           </div>
         </div>
 
-        {/* TABS */}
-        <div className="flex px-6 gap-4 mb-6 border-b border-gray-100 dark:border-gray-800 pb-2 shrink-0">
-            <button onClick={() => setActiveTab('calendar')} className={`flex items-center gap-2 pb-2 text-sm font-medium transition ${activeTab === 'calendar' ? 'text-indigo-500 border-b-2 border-indigo-500' : 'text-gray-400 hover:text-gray-500'}`}><CalIcon size={16} /> Monthly</button>
-            <button onClick={() => setActiveTab('global')} className={`flex items-center gap-2 pb-2 text-sm font-medium transition ${activeTab === 'global' ? 'text-indigo-500 border-b-2 border-indigo-500' : 'text-gray-400 hover:text-gray-500'}`}><Globe size={16} /> Global Goals</button>
+        {/* TABS (Now with 3 options) */}
+        <div className="flex px-6 gap-4 mb-4 border-b border-gray-100 dark:border-gray-800 pb-2 shrink-0 overflow-x-auto">
+            <button onClick={() => setActiveTab('calendar')} className={`flex items-center gap-2 pb-2 text-sm font-medium transition whitespace-nowrap ${activeTab === 'calendar' ? 'text-indigo-500 border-b-2 border-indigo-500' : 'text-gray-400 hover:text-gray-500'}`}><CalIcon size={16} /> Monthly</button>
+            <button onClick={() => setActiveTab('global')} className={`flex items-center gap-2 pb-2 text-sm font-medium transition whitespace-nowrap ${activeTab === 'global' ? 'text-indigo-500 border-b-2 border-indigo-500' : 'text-gray-400 hover:text-gray-500'}`}><Globe size={16} /> Goals</button>
+            <button onClick={() => setActiveTab('all')} className={`flex items-center gap-2 pb-2 text-sm font-medium transition whitespace-nowrap ${activeTab === 'all' ? 'text-indigo-500 border-b-2 border-indigo-500' : 'text-gray-400 hover:text-gray-500'}`}><ClipboardList size={16} /> Master List</button>
         </div>
 
         {/* SCROLLABLE CONTENT */}
@@ -133,10 +153,10 @@ export default function HomiesMyDay() {
                 </div>
             )}
             
-            {/* INPUT */}
+            {/* INPUT (Visible on all tabs so you can quick-add) */}
             <div className="px-6 mb-4">
                 <div className="flex gap-2 mb-2">
-                    <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder={activeTab === 'global' ? "Add a big goal..." : `Plan for ${selectedDate.toLocaleDateString()}...`} className={`flex-1 border-b-2 outline-none px-2 py-2 text-sm transition-colors ${inputBg}`} />
+                    <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder={activeTab === 'all' ? "Quick add to today..." : "Add a task..."} className={`flex-1 border-b-2 outline-none px-2 py-2 text-sm transition-colors ${inputBg}`} />
                     <button onClick={addTask} className="bg-indigo-600 text-white rounded-lg px-3 hover:bg-indigo-700 transition"><Plus size={20} /></button>
                 </div>
                 <div className="flex gap-2">{['Low', 'Medium', 'High'].map(p => <button key={p} onClick={() => setPriority(p)} className={`text-[10px] uppercase font-bold px-2 py-1 rounded border transition ${priority === p ? getPriorityColor(p) : 'border-transparent text-gray-400'}`}>{p}</button>)}</div>
@@ -144,12 +164,24 @@ export default function HomiesMyDay() {
 
             {/* LIST */}
             <div className="px-6 pb-20">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{activeTab === 'global' ? 'Global Vision List' : 'Daily Tasks'}</h3>
-                {filteredTasks.length === 0 && <div className="text-center py-10 opacity-50"><p className="text-sm">No plans for this date.</p></div>}
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                    {activeTab === 'all' ? `All Records (${filteredTasks.length})` : (activeTab === 'global' ? 'Global Vision List' : 'Daily Tasks')}
+                </h3>
+                
+                {filteredTasks.length === 0 && <div className="text-center py-10 opacity-50"><p className="text-sm">No records found.</p></div>}
+                
                 {filteredTasks.map(task => (
                     <div key={task.id} className={`group flex items-center gap-3 py-3 border-b ${isDarkMode ? 'border-gray-800' : 'border-gray-50'} transition`}>
                         <button onClick={() => toggleComplete(task.id)} className={`w-5 h-5 border rounded-full flex items-center justify-center transition ${task.completed ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-gray-400 text-transparent'}`}><Check size={12} strokeWidth={3} /></button>
-                        <span className={`flex-1 text-sm ${task.completed ? 'line-through text-gray-500' : ''}`}>{task.text}</span>
+                        
+                        <div className="flex-1 flex flex-col">
+                            <span className={`text-sm ${task.completed ? 'line-through text-gray-500' : ''}`}>{task.text}</span>
+                            {/* Shows "Created on Jan 18" only in the Master List */}
+                            {activeTab === 'all' && (
+                                <span className="text-[10px] text-gray-400">Written: {getCreatedDate(task.id)}</span>
+                            )}
+                        </div>
+
                         <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${getPriorityColor(task.priority)}`}>{task.priority}</span>
                         <button onClick={() => deleteTask(task.id)} className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><Trash2 size={14} /></button>
                     </div>
