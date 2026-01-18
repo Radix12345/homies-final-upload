@@ -56,15 +56,18 @@ export default function HomiesMyDay() {
   const inputBg = isDarkMode ? 'bg-[#2A2A2A] text-white border-gray-700 focus:border-gray-500' : 'bg-gray-50 text-black border-gray-200 focus:border-black';
 
   return (
-    <div className={`min-h-screen ${bgMain} ${textColor} font-sans flex justify-center md:items-center md:py-8 transition-colors duration-300`}>
-      <div className={`w-full md:max-w-md ${bgCard} md:shadow-xl md:border md:rounded-2xl overflow-hidden h-screen md:h-auto md:min-h-[700px] flex flex-col transition-colors duration-300 relative`}>
+    // OUTER CONTAINER: Uses 100dvh (Dynamic Viewport Height) to fix iPhone scrolling issues
+    <div className={`h-[100dvh] w-full ${bgMain} ${textColor} font-sans flex justify-center md:items-center md:py-8 transition-colors duration-300 overflow-hidden`}>
+      
+      {/* CARD CONTAINER: Full height/width on mobile, Rounded on Desktop */}
+      <div className={`w-full h-full md:max-w-md md:h-auto md:min-h-[700px] ${bgCard} md:shadow-xl md:border md:rounded-2xl flex flex-col transition-colors duration-300 relative`}>
         
         {/* HEADER */}
         <div className="h-44 bg-gradient-to-br from-indigo-500 to-purple-700 relative p-4 shrink-0">
             <button onClick={() => setIsDarkMode(!isDarkMode)} className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 p-2 rounded-full text-white backdrop-blur-md transition z-10">
               {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-            <div className="absolute bottom-2 right-4 text-xs text-white/60 font-mono">v2.1 Time Traveler</div>
+            <div className="absolute bottom-2 right-4 text-xs text-white/60 font-mono">v2.2 Mobile Snap</div>
         </div>
 
         {/* PROFILE */}
@@ -89,7 +92,7 @@ export default function HomiesMyDay() {
         </div>
 
         {/* SCROLLABLE CONTENT */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pb-safe">
             {activeTab === 'calendar' && (
                 <div className="px-6 mb-6">
                     <div className="flex justify-between items-center mb-4">
