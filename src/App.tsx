@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Check, Trash2, Moon, Sun, Calendar as CalIcon, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function HomiesMyDay() {
@@ -7,10 +7,28 @@ export default function HomiesMyDay() {
   const today = new Date();
   const [currentDate, setCurrentDate] = useState(today);
   const [selectedDate, setSelectedDate] = useState(today);
-  const [tasks, setTasks] = useState([
-    { id: 1, text: "Finish the app upgrade", priority: "High", completed: false, date: today.toDateString(), type: 'daily' },
-    { id: 2, text: "Become a React Pro", priority: "High", completed: false, date: "", type: 'global' },
-  ]);
+
+  // --- MEMORY FIX STARTS HERE ---
+  // 1. Initialize State: Try to load from "pocket" (localStorage) first.
+  const [tasks, setTasks] = useState(() => {
+    const saved = localStorage.getItem("homies-tasks");
+    if (saved) {
+      return JSON.parse(saved);
+    } else {
+      // Default tasks if nothing is saved yet
+      return [
+        { id: 1, text: "Finish the app upgrade", priority: "High", completed: false, date: today.toDateString(), type: 'daily' },
+        { id: 2, text: "Become a React Pro", priority: "High", completed: false, date: "", type: 'global' },
+      ];
+    }
+  });
+
+  // 2. Auto-Save: Whenever 'tasks' changes, save it to the pocket.
+  useEffect(() => {
+    localStorage.setItem("homies-tasks", JSON.stringify(tasks));
+  }, [tasks]);
+  // --- MEMORY FIX ENDS HERE ---
+
   const [newTask, setNewTask] = useState("");
   const [priority, setPriority] = useState("Low");
 
@@ -56,10 +74,8 @@ export default function HomiesMyDay() {
   const inputBg = isDarkMode ? 'bg-[#2A2A2A] text-white border-gray-700 focus:border-gray-500' : 'bg-gray-50 text-black border-gray-200 focus:border-black';
 
   return (
-    // SUPER GLUE MODE: 'fixed inset-0' locks it to the glass. No bouncing.
+    // SUPER GLUE LAYOUT (Preserved from previous fix)
     <div className={`fixed inset-0 w-full h-[100dvh] ${bgMain} ${textColor} font-sans flex justify-center md:items-center md:py-8 transition-colors duration-300 overflow-hidden`}>
-      
-      {/* CARD: Fills the fixed container exactly */}
       <div className={`w-full h-full md:max-w-md md:h-auto md:min-h-[700px] ${bgCard} md:shadow-xl md:border md:rounded-2xl flex flex-col transition-colors duration-300 relative`}>
         
         {/* HEADER */}
@@ -67,7 +83,7 @@ export default function HomiesMyDay() {
             <button onClick={() => setIsDarkMode(!isDarkMode)} className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 p-2 rounded-full text-white backdrop-blur-md transition z-10">
               {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-            <div className="absolute bottom-2 right-4 text-xs text-white/60 font-mono">v3.0 NATIVE</div>
+            <div className="absolute bottom-2 right-4 text-xs text-white/60 font-mono">v3.1 Memory</div>
         </div>
 
         {/* PROFILE */}
