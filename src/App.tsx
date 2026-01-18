@@ -35,7 +35,7 @@ export default function HomiesMyDay() {
   const handleDayClick = (day) => {
     const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
     setSelectedDate(newDate);
-    setActiveTab('calendar'); // Switch back to calendar when picking a date
+    setActiveTab('calendar');
   };
 
   const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
@@ -44,11 +44,10 @@ export default function HomiesMyDay() {
   const addTask = () => {
     if (!newTask.trim()) return;
     const taskType = activeTab === 'global' ? 'global' : 'daily';
-    // If we are in 'all' tab, default to daily task for today
     const taskDate = (activeTab === 'global') ? '2026' : selectedDate.toDateString();
     
     setTasks([...tasks, { 
-        id: Date.now(), // This ID is also the "Created At" timestamp!
+        id: Date.now(), 
         text: newTask, 
         priority, 
         completed: false, 
@@ -64,7 +63,6 @@ export default function HomiesMyDay() {
   // --- FILTER LOGIC ---
   const getFilteredTasks = () => {
       if (activeTab === 'all') {
-          // Return ALL tasks, sorted by newest first (using ID)
           return [...tasks].sort((a, b) => b.id - a.id);
       }
       return tasks.filter(task => {
@@ -83,7 +81,6 @@ export default function HomiesMyDay() {
     }
   };
 
-  // Format the "Created Date" from the ID
   const getCreatedDate = (id) => {
       return new Date(id).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
@@ -97,16 +94,29 @@ export default function HomiesMyDay() {
     <div className={`fixed inset-0 w-full h-[100dvh] ${bgMain} ${textColor} font-sans flex justify-center md:items-center md:py-8 transition-colors duration-300 overflow-hidden`}>
       <div className={`w-full h-full md:max-w-md md:h-auto md:min-h-[700px] ${bgCard} md:shadow-xl md:border md:rounded-2xl flex flex-col transition-colors duration-300 relative`}>
         
-        {/* HEADER */}
-        <div className="h-44 bg-gradient-to-br from-indigo-500 to-purple-700 relative p-4 shrink-0">
-            <button onClick={() => setIsDarkMode(!isDarkMode)} className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 p-2 rounded-full text-white backdrop-blur-md transition z-10">
-              {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-            <div className="absolute bottom-2 right-4 text-xs text-white/60 font-mono">v4.0 Master Log</div>
+        {/* --- NEW COVER PHOTO HEADER --- */}
+        <div className="h-44 relative shrink-0 overflow-hidden group">
+            {/* 1. The Image Layer (Behind everything) */}
+            {/* IMPORTANT: If your file is .png, change cover-photo.jpg to cover-photo.png below! */}
+            <div 
+                className="absolute inset-0 bg-cover bg-center z-0 transition-transform duration-1000 group-hover:scale-110"
+                style={{ backgroundImage: "url('/cover-photo.png')" }}
+            ></div>
+
+            {/* 2. The Dark Overlay Layer (Makes text readable) */}
+            <div className="absolute inset-0 bg-black/30 z-10"></div>
+
+            {/* 3. The Content Layer (Buttons and Text on top) */}
+            <div className="relative p-4 z-20 h-full">
+                 <button onClick={() => setIsDarkMode(!isDarkMode)} className="absolute top-4 right-4 bg-black/30 hover:bg-black/50 p-2 rounded-full text-white backdrop-blur-md transition">
+                   {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+                 </button>
+                 <div className="absolute bottom-2 right-4 text-xs text-white/90 font-mono drop-shadow-md">v4.1 Cover Photo</div>
+            </div>
         </div>
 
-        {/* PROFILE */}
-        <div className="px-6 relative mb-4 shrink-0">
+        {/* PROFILE - (Your face sits on top of the cover photo area now) */}
+        <div className="px-6 relative mb-4 shrink-0 z-30">
           <div className="absolute -top-16 left-6">
             <div className={`w-32 h-32 rounded-full border-4 ${isDarkMode ? 'border-[#202020]' : 'border-white'} shadow-lg overflow-hidden bg-gray-300`}>
                 <img src="/my-face.PNG" alt="My Face" className="w-full h-full object-cover"/>
@@ -120,7 +130,7 @@ export default function HomiesMyDay() {
           </div>
         </div>
 
-        {/* TABS (Now with 3 options) */}
+        {/* TABS */}
         <div className="flex px-6 gap-4 mb-4 border-b border-gray-100 dark:border-gray-800 pb-2 shrink-0 overflow-x-auto">
             <button onClick={() => setActiveTab('calendar')} className={`flex items-center gap-2 pb-2 text-sm font-medium transition whitespace-nowrap ${activeTab === 'calendar' ? 'text-indigo-500 border-b-2 border-indigo-500' : 'text-gray-400 hover:text-gray-500'}`}><CalIcon size={16} /> Monthly</button>
             <button onClick={() => setActiveTab('global')} className={`flex items-center gap-2 pb-2 text-sm font-medium transition whitespace-nowrap ${activeTab === 'global' ? 'text-indigo-500 border-b-2 border-indigo-500' : 'text-gray-400 hover:text-gray-500'}`}><Globe size={16} /> Goals</button>
@@ -153,7 +163,7 @@ export default function HomiesMyDay() {
                 </div>
             )}
             
-            {/* INPUT (Visible on all tabs so you can quick-add) */}
+            {/* INPUT */}
             <div className="px-6 mb-4">
                 <div className="flex gap-2 mb-2">
                     <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder={activeTab === 'all' ? "Quick add to today..." : "Add a task..."} className={`flex-1 border-b-2 outline-none px-2 py-2 text-sm transition-colors ${inputBg}`} />
@@ -173,15 +183,10 @@ export default function HomiesMyDay() {
                 {filteredTasks.map(task => (
                     <div key={task.id} className={`group flex items-center gap-3 py-3 border-b ${isDarkMode ? 'border-gray-800' : 'border-gray-50'} transition`}>
                         <button onClick={() => toggleComplete(task.id)} className={`w-5 h-5 border rounded-full flex items-center justify-center transition ${task.completed ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-gray-400 text-transparent'}`}><Check size={12} strokeWidth={3} /></button>
-                        
                         <div className="flex-1 flex flex-col">
                             <span className={`text-sm ${task.completed ? 'line-through text-gray-500' : ''}`}>{task.text}</span>
-                            {/* Shows "Created on Jan 18" only in the Master List */}
-                            {activeTab === 'all' && (
-                                <span className="text-[10px] text-gray-400">Written: {getCreatedDate(task.id)}</span>
-                            )}
+                            {activeTab === 'all' && (<span className="text-[10px] text-gray-400">Written: {getCreatedDate(task.id)}</span>)}
                         </div>
-
                         <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${getPriorityColor(task.priority)}`}>{task.priority}</span>
                         <button onClick={() => deleteTask(task.id)} className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><Trash2 size={14} /></button>
                     </div>
