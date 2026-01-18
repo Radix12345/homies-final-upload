@@ -56,10 +56,10 @@ export default function HomiesMyDay() {
   const inputBg = isDarkMode ? 'bg-[#2A2A2A] text-white border-gray-700 focus:border-gray-500' : 'bg-gray-50 text-black border-gray-200 focus:border-black';
 
   return (
-    // OUTER CONTAINER: Uses 100dvh (Dynamic Viewport Height) to fix iPhone scrolling issues
-    <div className={`h-[100dvh] w-full ${bgMain} ${textColor} font-sans flex justify-center md:items-center md:py-8 transition-colors duration-300 overflow-hidden`}>
+    // SUPER GLUE MODE: 'fixed inset-0' locks it to the glass. No bouncing.
+    <div className={`fixed inset-0 w-full h-[100dvh] ${bgMain} ${textColor} font-sans flex justify-center md:items-center md:py-8 transition-colors duration-300 overflow-hidden`}>
       
-      {/* CARD CONTAINER: Full height/width on mobile, Rounded on Desktop */}
+      {/* CARD: Fills the fixed container exactly */}
       <div className={`w-full h-full md:max-w-md md:h-auto md:min-h-[700px] ${bgCard} md:shadow-xl md:border md:rounded-2xl flex flex-col transition-colors duration-300 relative`}>
         
         {/* HEADER */}
@@ -67,7 +67,7 @@ export default function HomiesMyDay() {
             <button onClick={() => setIsDarkMode(!isDarkMode)} className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 p-2 rounded-full text-white backdrop-blur-md transition z-10">
               {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-            <div className="absolute bottom-2 right-4 text-xs text-white/60 font-mono">v2.2 Mobile Snap</div>
+            <div className="absolute bottom-2 right-4 text-xs text-white/60 font-mono">v3.0 NATIVE</div>
         </div>
 
         {/* PROFILE */}
